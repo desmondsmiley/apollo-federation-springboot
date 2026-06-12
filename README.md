@@ -490,14 +490,13 @@ The router will fetch the latest composed schema from GraphOS automatically.
 
 If you see Gradle errors about missing DGS versions, update the BOM version in `dependencyManagement` inside both `build.gradle` files. Check the [DGS releases page](https://github.com/Netflix/dgs-framework/releases) for the latest version compatible with your Spring Boot version.
 
-**Compatibility reference (standalone DGS starter):**
-| Spring Boot | DGS Standalone (`graphql-dgs-spring-boot-starter`) |
-|-------------|-----------------------------------------------------|
-| 3.3.x       | 9.x.x                                               |
-| 3.2.x       | 8.x.x                                               |
-| 2.7.x       | 6.x.x                                               |
+**Compatibility reference:**
+| Spring Boot | DGS Spring GraphQL (`graphql-dgs-spring-graphql-starter`) |
+|-------------|-----------------------------------------------------------|
+| 3.3.x       | 10.x.x                                                    |
+| 3.2.x       | 9.x.x                                                     |
 
-> This project uses `graphql-dgs-spring-boot-starter` (not the newer `graphql-dgs-spring-graphql-starter`) because it handles Apollo Federation schema loading internally via `federation-graphql-java-support`, which correctly processes the `@link` directive required by Federation 2.
+> This project uses `graphql-dgs-spring-graphql-starter`, the Spring for GraphQL integration flavor of DGS. Federation works because `DgsGraphQLSourceBuilder` delegates schema building directly to `DgsSchemaProvider`, which owns the federation pipeline and correctly processes the `@link` directive required by Federation 2.
 
 ### Port already in use
 
@@ -547,7 +546,7 @@ If the router can't connect to a subgraph, check:
 | Component        | Technology                           |
 |------------------|--------------------------------------|
 | Subgraph runtime | Spring Boot 3.3.6                    |
-| GraphQL server   | Netflix DGS Framework 9.2.2          |
+| GraphQL server   | Netflix DGS Framework 10.2.1         |
 | Federation spec  | Apollo Federation 2.0                |
 | Gateway          | Apollo Router                        |
 | Schema tooling   | Rover CLI                            |
