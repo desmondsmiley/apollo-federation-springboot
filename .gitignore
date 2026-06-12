@@ -1,0 +1,14 @@
+router
+router.exe
+target/
+*.class
+*.jar
+*.war
+*.ear
+.env
+*.log
+supergraph.graphql
+.DS_Store
+.idea/
+*.iml
+.vscode/

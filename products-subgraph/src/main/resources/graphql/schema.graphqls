@@ -1,0 +1,59 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0",
+        import: ["@key", "@external"])
+
+type Query {
+  product(id: ID!): Product
+  products: [Product!]!
+  productsByStock(inStock: Boolean!): [Product!]!
+}
+
+type Mutation {
+  createProduct(input: CreateProductInput!): Product!
+  updateProduct(id: ID!, input: UpdateProductInput!): Product
+  deleteProduct(id: ID!): Boolean!
+  addReview(input: AddReviewInput!): Review!
+}
+
+type Product @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String!
+  price: Float!
+  inStock: Boolean!
+  reviews: [Review!]!
+}
+
+type Review {
+  id: ID!
+  rating: Int!
+  comment: String!
+  author: User!
+}
+
+# This is a stub — the full User type lives in the Users subgraph.
+# The router fetches complete user data from there when needed.
+type User @key(fields: "id", resolvable: false) {
+  id: ID!
+}
+
+input CreateProductInput {
+  name: String!
+  description: String!
+  price: Float!
+  inStock: Boolean! = true
+}
+
+input UpdateProductInput {
+  name: String
+  description: String
+  price: Float
+  inStock: Boolean
+}
+
+input AddReviewInput {
+  productId: ID!
+  rating: Int!
+  comment: String!
+  authorId: ID!
+}

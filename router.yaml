@@ -1,0 +1,18 @@
+supergraph:
+  path: /graphql
+  introspection: true
+
+sandbox:
+  enabled: true
+
+homepage:
+  enabled: false
+
+cors:
+  allow_any_origin: true
+
+headers:
+  all:
+    request:
+      - propagate:
+          matching: ".*"
