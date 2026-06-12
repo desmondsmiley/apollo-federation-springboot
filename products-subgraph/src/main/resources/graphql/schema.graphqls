@@ -31,7 +31,7 @@ type Review {
   author: User!
 }
 
-# This is a stub — the full User type lives in the Users subgraph.
+# Stub — the full User type lives in the Users subgraph.
 # The router fetches complete user data from there when needed.
 type User @key(fields: "id", resolvable: false) {
   id: ID!

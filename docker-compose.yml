@@ -30,3 +30,18 @@ services:
       timeout: 10s
       retries: 5
       start_period: 40s
+
+  orders-subgraph:
+    build:
+      context: ./orders-subgraph
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SERVER_PORT=8083
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s

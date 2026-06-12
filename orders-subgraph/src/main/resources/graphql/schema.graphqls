@@ -1,0 +1,55 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0",
+        import: ["@key", "@external"])
+
+type Query {
+  order(id: ID!): Order
+  orders: [Order!]!
+  ordersByUser(userId: ID!): [Order!]!
+}
+
+type Mutation {
+  createOrder(input: CreateOrderInput!): Order!
+  updateOrderStatus(id: ID!, status: OrderStatus!): Order
+  cancelOrder(id: ID!): Boolean!
+}
+
+type Order @key(fields: "id") {
+  id: ID!
+  status: OrderStatus!
+  totalPrice: Float!
+  items: [OrderItem!]!
+  user: User!
+  createdAt: String!
+}
+
+type OrderItem {
+  productId: ID!
+  quantity: Int!
+  price: Float!
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+# Stub — the full User type lives in the Users subgraph.
+# The router fetches complete user data from there when needed.
+type User @key(fields: "id", resolvable: false) {
+  id: ID!
+}
+
+input CreateOrderInput {
+  userId: ID!
+  items: [OrderItemInput!]!
+}
+
+input OrderItemInput {
+  productId: ID!
+  quantity: Int!
+  price: Float!
+}
