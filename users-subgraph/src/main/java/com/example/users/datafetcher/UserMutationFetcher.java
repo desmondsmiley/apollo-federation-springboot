@@ -7,13 +7,13 @@ import com.example.users.service.UserService;
 import com.netflix.graphql.dgs.DgsComponent;
 import com.netflix.graphql.dgs.DgsMutation;
 import com.netflix.graphql.dgs.InputArgument;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 
 @DgsComponent
+@RequiredArgsConstructor
 public class UserMutationFetcher {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     @DgsMutation
     public User createUser(@InputArgument CreateUserInput input) {

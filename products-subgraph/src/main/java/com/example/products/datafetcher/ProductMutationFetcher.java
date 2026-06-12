@@ -9,13 +9,13 @@ import com.example.products.service.ProductService;
 import com.netflix.graphql.dgs.DgsComponent;
 import com.netflix.graphql.dgs.DgsMutation;
 import com.netflix.graphql.dgs.InputArgument;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 
 @DgsComponent
+@RequiredArgsConstructor
 public class ProductMutationFetcher {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
     @DgsMutation
     public Product createProduct(@InputArgument CreateProductInput input) {

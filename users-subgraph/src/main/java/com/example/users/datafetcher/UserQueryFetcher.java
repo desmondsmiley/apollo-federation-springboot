@@ -5,15 +5,15 @@ import com.example.users.service.UserService;
 import com.netflix.graphql.dgs.DgsComponent;
 import com.netflix.graphql.dgs.DgsQuery;
 import com.netflix.graphql.dgs.InputArgument;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @DgsComponent
+@RequiredArgsConstructor
 public class UserQueryFetcher {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     @DgsQuery
     public User user(@InputArgument String id) {

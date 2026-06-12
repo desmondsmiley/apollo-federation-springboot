@@ -4,7 +4,7 @@ import com.example.products.model.Product;
 import com.example.products.service.ProductService;
 import com.netflix.graphql.dgs.DgsComponent;
 import com.netflix.graphql.dgs.DgsEntityFetcher;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
@@ -16,10 +16,10 @@ import java.util.Map;
  * this fetcher returns the full Product object.
  */
 @DgsComponent
+@RequiredArgsConstructor
 public class ProductEntityFetcher {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
     @DgsEntityFetcher(name = "Product")
     public Product fetchProductById(Map<String, Object> values) {

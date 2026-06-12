@@ -4,7 +4,7 @@ import com.example.users.model.User;
 import com.example.users.service.UserService;
 import com.netflix.graphql.dgs.DgsComponent;
 import com.netflix.graphql.dgs.DgsEntityFetcher;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
@@ -18,10 +18,10 @@ import java.util.Map;
  * This fetcher handles that request and returns the full User object.
  */
 @DgsComponent
+@RequiredArgsConstructor
 public class UserEntityFetcher {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     @DgsEntityFetcher(name = "User")
     public User fetchUserById(Map<String, Object> values) {

@@ -5,15 +5,15 @@ import com.example.products.service.ProductService;
 import com.netflix.graphql.dgs.DgsComponent;
 import com.netflix.graphql.dgs.DgsQuery;
 import com.netflix.graphql.dgs.InputArgument;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @DgsComponent
+@RequiredArgsConstructor
 public class ProductQueryFetcher {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
     @DgsQuery
     public Product product(@InputArgument String id) {
