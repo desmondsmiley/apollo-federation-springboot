@@ -1,6 +1,6 @@
 # Apollo Federation Supergraph with Spring Boot
 
-A complete **Apollo Federation 2** supergraph built with two Spring Boot subgraphs using the [Netflix DGS Framework](https://netflix.github.io/dgs/). This project is a beginner-friendly reference for building federated GraphQL APIs in Java.
+A complete **Apollo Federation 2** supergraph built with three Spring Boot subgraphs using the [Netflix DGS Framework](https://netflix.github.io/dgs/). This project is a beginner-friendly reference for building federated GraphQL APIs in Java.
 
 ---
 
@@ -14,10 +14,11 @@ Client
   ▼
 Apollo Router  (port 4000)  ← single entry point
   ├── Users Subgraph        (port 8081)  ← owns User type
-  └── Products Subgraph     (port 8082)  ← owns Product, Review types
+  ├── Products Subgraph     (port 8082)  ← owns Product, Review types
+  └── Orders Subgraph       (port 8083)  ← owns Order type
 ```
 
-When a client asks for a review's author, the router automatically fetches the product from the Products subgraph and the user details from the Users subgraph — then merges them into one response.
+When a client asks for a review's author, the router automatically fetches the product from the Products subgraph and the user details from the Users subgraph — then merges them into one response. When a client asks for an order's user details, the router fetches the `User` fields from the Users subgraph and stitches them into the Order response.
 
 ---
 
@@ -28,7 +29,7 @@ apollo-federation-springboot/
 ├── README.md
 ├── supergraph.yaml          ← Rover composition config
 ├── router.yaml              ← Apollo Router config
-├── docker-compose.yml       ← runs both subgraphs with Docker
+├── docker-compose.yml       ← runs all three subgraphs with Docker
 │
 ├── users-subgraph/          ← Spring Boot app on port 8081
 │   ├── build.gradle
@@ -47,18 +48,34 @@ apollo-federation-springboot/
 │           ├── application.yml
 │           └── graphql/schema.graphqls
 │
-└── products-subgraph/       ← Spring Boot app on port 8082
+├── products-subgraph/       ← Spring Boot app on port 8082
+│   ├── build.gradle
+│   ├── settings.gradle
+│   └── src/main/
+│       ├── java/com/example/products/
+│       │   ├── model/{Product,Review,User}.java
+│       │   ├── input/{CreateProductInput,UpdateProductInput,AddReviewInput}.java
+│       │   ├── service/ProductService.java
+│       │   └── datafetcher/
+│       │       ├── ProductQueryFetcher.java
+│       │       ├── ProductMutationFetcher.java
+│       │       └── ProductEntityFetcher.java ← federation entity resolution
+│       └── resources/
+│           ├── application.yml
+│           └── graphql/schema.graphqls
+│
+└── orders-subgraph/         ← Spring Boot app on port 8083
     ├── build.gradle
     ├── settings.gradle
     └── src/main/
-        ├── java/com/example/products/
-        │   ├── model/{Product,Review,User}.java
-        │   ├── input/{CreateProductInput,UpdateProductInput,AddReviewInput}.java
-        │   ├── service/ProductService.java
+        ├── java/com/example/orders/
+        │   ├── model/{Order,OrderItem,OrderStatus,User}.java
+        │   ├── input/{CreateOrderInput,OrderItemInput}.java
+        │   ├── service/OrderService.java
         │   └── datafetcher/
-        │       ├── ProductQueryFetcher.java
-        │       ├── ProductMutationFetcher.java
-        │       └── ProductEntityFetcher.java ← federation entity resolution
+        │       ├── OrderQueryFetcher.java
+        │       ├── OrderMutationFetcher.java
+        │       └── OrderEntityFetcher.java  ← federation entity resolution
         └── resources/
             ├── application.yml
             └── graphql/schema.graphqls
@@ -142,7 +159,7 @@ router --version
 
 ## Running Everything Locally (Step by Step)
 
-Open **three terminal windows** for this.
+Open **four terminal windows** for this.
 
 ### Terminal 1 — Start the Users Subgraph
 
@@ -176,7 +193,23 @@ Started ProductsSubgraphApplication in X.XXX seconds
 The Products subgraph is now running at **http://localhost:8082/graphql**.
 Open **http://localhost:8082/graphiql** in a browser to explore it directly.
 
-### Terminal 3 — Compose the Supergraph and Start the Router
+### Terminal 3 — Start the Orders Subgraph
+
+```bash
+cd orders-subgraph
+./gradlew bootRun   # macOS/Linux
+gradlew.bat bootRun # Windows
+```
+
+Wait until you see:
+```
+Started OrdersSubgraphApplication in X.XXX seconds
+```
+
+The Orders subgraph is now running at **http://localhost:8083/graphql**.
+Open **http://localhost:8083/graphiql** in a browser to explore it directly.
+
+### Terminal 4 — Compose the Supergraph and Start the Router
 
 First, compose the supergraph schema (Rover introspects both running subgraphs):
 
@@ -184,7 +217,7 @@ First, compose the supergraph schema (Rover introspects both running subgraphs):
 rover supergraph compose --elv2-license accept --config supergraph.yaml > supergraph.graphql
 ```
 
-You should see two `HINT` lines about unused enum types (harmless DGS defaults) and then the composed SDL printed to `supergraph.graphql`.
+You should see `HINT` lines about unused enum types (harmless DGS defaults) and then the composed SDL printed to `supergraph.graphql`.
 
 > **Note:** The `--elv2-license accept` flag acknowledges the [Apollo Router ELv2 license](https://www.apollographql.com/docs/resources/elastic-license-v2-faq/). It is required for composition and for running Apollo Router.
 
@@ -322,11 +355,83 @@ mutation AddReview {
 }
 ```
 
+**Fetch all orders with user details (cross-subgraph):**
+```graphql
+query GetAllOrders {
+  orders {
+    id
+    status
+    totalPrice
+    createdAt
+    items {
+      productId
+      quantity
+      price
+    }
+    user {
+      id
+      name    # ← resolved from Users subgraph via federation
+      email
+    }
+  }
+}
+```
+
+**Fetch orders for a specific user:**
+```graphql
+query GetOrdersByUser {
+  ordersByUser(userId: "1") {
+    id
+    status
+    totalPrice
+    createdAt
+  }
+}
+```
+
+**Create a new order:**
+```graphql
+mutation CreateOrder {
+  createOrder(input: {
+    userId: "1"
+    items: [
+      { productId: "1", quantity: 1, price: 1299.99 }
+      { productId: "2", quantity: 2, price: 49.99 }
+    ]
+  }) {
+    id
+    status
+    totalPrice
+    user {
+      id
+      name    # ← resolved from Users subgraph via federation
+    }
+  }
+}
+```
+
+**Update an order's status:**
+```graphql
+mutation UpdateOrderStatus {
+  updateOrderStatus(id: "1", status: SHIPPED) {
+    id
+    status
+  }
+}
+```
+
+**Cancel an order:**
+```graphql
+mutation CancelOrder {
+  cancelOrder(id: "2")
+}
+```
+
 ---
 
 ## Pre-loaded Sample Data
 
-Both services start with in-memory sample data (no database required):
+All three services start with in-memory sample data (no database required):
 
 **Users:**
 | ID | Name          | Email               | Username |
@@ -336,11 +441,18 @@ Both services start with in-memory sample data (no database required):
 | 3  | Charlie Brown | charlie@example.com | charlie  |
 
 **Products:**
-| ID | Name                  | Price    | In Stock |
-|----|-----------------------|----------|----------|
-| 1  | Laptop Pro 15         | $1299.99 | Yes      |
-| 2  | Wireless Ergonomic Mouse | $49.99 | Yes    |
-| 3  | Mechanical Keyboard RGB  | $129.99 | No     |
+| ID | Name                     | Price    | In Stock |
+|----|--------------------------|----------|----------|
+| 1  | Laptop Pro 15            | $1299.99 | Yes      |
+| 2  | Wireless Ergonomic Mouse | $49.99   | Yes      |
+| 3  | Mechanical Keyboard RGB  | $129.99  | No       |
+
+**Orders:**
+| ID | User | Status     | Total      | Items                                    |
+|----|------|------------|------------|------------------------------------------|
+| 1  | 1    | DELIVERED  | $1,349.98  | Laptop Pro 15 (×1), Ergonomic Mouse (×1) |
+| 2  | 2    | PROCESSING | $129.99    | Mechanical Keyboard RGB (×1)             |
+| 3  | 1    | PENDING    | $99.98     | Ergonomic Mouse (×2)                     |
 
 > **Note:** Data is in-memory and resets when the services restart.
 
@@ -350,12 +462,12 @@ Both services start with in-memory sample data (no database required):
 
 If you have Docker installed, you can build and run the subgraphs in containers.
 
-**Build and start both subgraphs:**
+**Build and start all three subgraphs:**
 ```bash
 docker-compose up --build
 ```
 
-**Wait until both containers are healthy, then in a separate terminal, compose and start the router as described above.**
+**Wait until all containers are healthy, then in a separate terminal, compose and start the router as described above.**
 
 Check container health:
 ```bash
@@ -466,6 +578,12 @@ rover subgraph publish my-federation-demo@main \
   --name products \
   --schema products-subgraph/src/main/resources/graphql/schema.graphqls \
   --routing-url http://localhost:8082/graphql
+
+# Publish the orders subgraph
+rover subgraph publish my-federation-demo@main \
+  --name orders \
+  --schema orders-subgraph/src/main/resources/graphql/schema.graphqls \
+  --routing-url http://localhost:8083/graphql
 ```
 
 Replace `my-federation-demo@main` with your actual graph ref.
@@ -500,10 +618,10 @@ If you see Gradle errors about missing DGS versions, update the BOM version in `
 
 ### Port already in use
 
-If port 8081 or 8082 is in use:
+If port 8081, 8082, or 8083 is in use:
 ```bash
-# Find what's using port 8081
-lsof -i :8081
+# Find what's using a port (e.g. 8083)
+lsof -i :8083
 # Kill it
 kill -9 <PID>
 ```
@@ -517,9 +635,9 @@ Then update the corresponding entry in `supergraph.yaml`.
 
 ### Rover composition fails
 
-Make sure both subgraphs are running before running `rover supergraph compose`. Rover needs to introspect the live services via their `_service { sdl }` endpoint.
+Make sure all three subgraphs are running before running `rover supergraph compose`. Rover needs to introspect the live services via their `_service { sdl }` endpoint.
 
-Test that both endpoints are reachable:
+Test that all endpoints are reachable:
 ```bash
 curl -X POST http://localhost:8081/graphql \
   -H "Content-Type: application/json" \
@@ -528,9 +646,13 @@ curl -X POST http://localhost:8081/graphql \
 curl -X POST http://localhost:8082/graphql \
   -H "Content-Type: application/json" \
   -d '{"query":"{ _service { sdl } }"}'
+
+curl -X POST http://localhost:8083/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ _service { sdl } }"}'
 ```
 
-Both should return a JSON response with the schema SDL.
+All three should return a JSON response with the schema SDL.
 
 ### Router cannot reach subgraphs
 
@@ -559,6 +681,6 @@ If the router can't connect to a subgraph, check:
 
 - **Add a real database:** Replace the in-memory `ConcurrentHashMap` with Spring Data JPA + PostgreSQL or MongoDB.
 - **Add authentication:** Use Apollo Router's JWT authentication plugin, or add Spring Security to the subgraphs.
-- **Add a third subgraph:** Try creating an `orders-subgraph` that references both `User` and `Product` entities.
-- **Add subscriptions:** Use Spring's WebSocket support and DGS subscriptions for real-time updates.
+- **Link Products to Orders:** Extend the `Order` schema to reference `Product` entities and resolve product details from the Products subgraph using `@external` and `@requires`.
+- **Add subscriptions:** Use Spring's WebSocket support and DGS subscriptions for real-time order status updates.
 - **Deploy to the cloud:** Containerize with Docker, push to a registry, and deploy to Kubernetes or a cloud provider.
