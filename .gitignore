@@ -1,6 +1,8 @@
 router
 router.exe
 target/
+build/
+.gradle/
 *.class
 *.jar
 *.war

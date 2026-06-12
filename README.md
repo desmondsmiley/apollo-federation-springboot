@@ -31,7 +31,8 @@ apollo-federation-springboot/
 ├── docker-compose.yml       ← runs both subgraphs with Docker
 │
 ├── users-subgraph/          ← Spring Boot app on port 8081
-│   ├── pom.xml
+│   ├── build.gradle
+│   ├── settings.gradle
 │   └── src/main/
 │       ├── java/com/example/users/
 │       │   ├── model/User.java
@@ -47,7 +48,8 @@ apollo-federation-springboot/
 │           └── graphql/schema.graphqls
 │
 └── products-subgraph/       ← Spring Boot app on port 8082
-    ├── pom.xml
+    ├── build.gradle
+    ├── settings.gradle
     └── src/main/
         ├── java/com/example/products/
         │   ├── model/{Product,Review,User}.java
@@ -77,17 +79,16 @@ java -version
 
 If not installed, download from [https://adoptium.net](https://adoptium.net) and choose **Temurin 17 (LTS)**.
 
-### 2. Apache Maven 3.8+
+### 2. Gradle (via the included wrapper — no installation needed)
 
-Check if Maven is installed:
+Both subgraphs include a Gradle wrapper (`gradlew` / `gradlew.bat`), so you do **not** need to install Gradle separately. The wrapper downloads the correct Gradle version automatically on first run.
+
+To verify it works after cloning:
 ```bash
-mvn -version
+cd users-subgraph
+./gradlew --version   # macOS/Linux
+gradlew.bat --version # Windows
 ```
-
-If not installed:
-- **macOS:** `brew install maven`
-- **Ubuntu/Debian:** `sudo apt install maven`
-- **Windows:** Download from [https://maven.apache.org/download.cgi](https://maven.apache.org/download.cgi)
 
 ### 3. Rover CLI (Apollo's schema tool)
 
@@ -147,7 +148,8 @@ Open **three terminal windows** for this.
 
 ```bash
 cd users-subgraph
-mvn spring-boot:run
+./gradlew bootRun   # macOS/Linux
+gradlew.bat bootRun # Windows
 ```
 
 Wait until you see:
@@ -162,7 +164,8 @@ Open **http://localhost:8081/graphiql** in a browser to explore it directly.
 
 ```bash
 cd products-subgraph
-mvn spring-boot:run
+./gradlew bootRun   # macOS/Linux
+gradlew.bat bootRun # Windows
 ```
 
 Wait until you see:
@@ -483,9 +486,9 @@ The router will fetch the latest composed schema from GraphOS automatically.
 
 ## Troubleshooting
 
-### Maven dependency resolution errors
+### Gradle dependency resolution errors
 
-If you see Maven errors about missing DGS versions, update the `dgs.version` property in both `pom.xml` files. Check the [DGS releases page](https://github.com/Netflix/dgs-framework/releases) for the latest version compatible with your Spring Boot version.
+If you see Gradle errors about missing DGS versions, update the BOM version in `dependencyManagement` inside both `build.gradle` files. Check the [DGS releases page](https://github.com/Netflix/dgs-framework/releases) for the latest version compatible with your Spring Boot version.
 
 **Compatibility reference (standalone DGS starter):**
 | Spring Boot | DGS Standalone (`graphql-dgs-spring-boot-starter`) |
@@ -549,7 +552,7 @@ If the router can't connect to a subgraph, check:
 | Gateway          | Apollo Router                        |
 | Schema tooling   | Rover CLI                            |
 | Java version     | Java 17+ (tested on Java 25)         |
-| Build tool       | Apache Maven                         |
+| Build tool       | Gradle (wrapper included)            |
 
 ---
 
