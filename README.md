@@ -87,7 +87,7 @@ apollo-federation-springboot/
 
 Before starting, install all of the following:
 
-### 1. Java 17+
+### 1. Java 21+
 
 Check if Java is installed:
 ```bash
