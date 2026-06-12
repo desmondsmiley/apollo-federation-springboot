@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.6'
-    id 'io.spring.dependency-management' version '1.1.6'
 }
 
 group = 'com.example'
@@ -16,23 +15,12 @@ repositories {
     mavenCentral()
 }
 
-// DGS BOM layered on top of the Spring Boot BOM (applied automatically by the plugin above)
-dependencyManagement {
-    imports {
-        // Check latest at https://github.com/Netflix/dgs-framework/releases
-        // Spring Boot 3.3.x → DGS 9.x (standalone) or 10.x (spring-graphql)
-        mavenBom 'com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:9.2.2'
-    }
-}
-
 dependencies {
-    // Netflix DGS Framework (standalone, handles federation schema loading)
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.3.6')
+    implementation platform('com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:9.2.2')
+
     implementation 'com.netflix.graphql.dgs:graphql-dgs-spring-boot-starter'
-
-    // Spring Web (needed for the GraphQL HTTP endpoint)
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
-    // Spring Actuator (used for health checks in Docker)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
